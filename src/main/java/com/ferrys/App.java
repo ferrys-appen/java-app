@@ -6,7 +6,7 @@ package com.ferrys;
  */
 public class App {
     public static String greet() {
-        return "Hello, World!2";
+        return "Hello, World!3";
     }
 
     public static void main(String[] args) {
