@@ -29,6 +29,6 @@ public class AppTest
      * Rigourous Test :-)
      */
     public void testApp() {
-        assertEquals("Hello, World!", App.greet());
+        assertEquals("Hello, World!1", App.greet());
     }
 }
