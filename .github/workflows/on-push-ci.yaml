@@ -1,6 +1,7 @@
-on: 
-    push:
-
+name: CI
+on:
+  push:
 jobs:
   ci:
     uses: ferrys-appen/cicd/.github/workflows/java-on-push-ci.yaml@main
+    secrets: inherit
