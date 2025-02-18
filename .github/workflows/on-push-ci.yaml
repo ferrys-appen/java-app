@@ -1,8 +1,12 @@
-on: 
+name: SonarQube
+on:
   push:
-
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
-  sonar:
+  ci:
     uses: ferrys-appen/cicd/.github/workflows/java-on-push-ci.yaml@main
     with:
-      sonar_token: ${{ secrets.SONAR_TOKEN }}
+      sonar_token: "aaaa"
