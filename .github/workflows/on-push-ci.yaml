@@ -1,6 +1,8 @@
 on: 
-    push:
+  push:
 
 jobs:
-  ci:
+  sonar:
     uses: ferrys-appen/cicd/.github/workflows/java-on-push-ci.yaml@main
+    with:
+      sonar_token: ${{ secrets.SONAR_TOKEN }}
