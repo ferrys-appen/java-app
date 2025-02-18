@@ -8,6 +8,7 @@
   <name>java-app</name>
   <url>http://maven.apache.org</url>
   <properties>
+    <sonar.projectKey>ferrys-appen_java-app</sonar.projectKey>
     <sonar.organization>ferrys-appen</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
