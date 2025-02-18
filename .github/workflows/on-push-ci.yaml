@@ -1,10 +1,7 @@
-name: SonarQube
+name: CI
 on:
   push:
-  pull_request:
-    types: [opened, synchronize, reopened]
 jobs:
   ci:
     uses: ferrys-appen/cicd/.github/workflows/java-on-push-ci.yaml@main
-    with:
-      sonar_token: "aaaa"
+    secrets: inherit
