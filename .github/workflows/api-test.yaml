@@ -5,7 +5,6 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:
 
 jobs:
   test-api:
@@ -14,25 +13,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check for Maven Wrapper
+        run: ls -lah
+
+      - name: Make mvnw Executable
+        run: chmod +x mvnw
+        continue-on-error: true
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17' # Adjust as needed
+          java-version: '17'
+
+      - name: Install Maven (if needed)
+        run: sudo apt-get install -y maven
+        continue-on-error: true
 
       - name: Build Java API
-        run: |
-          ./mvnw clean package -DskipTests
-          
+        run: mvn clean package -DskipTests
+
       - name: Start API Server
         run: |
           java -jar target/*.jar &
           echo "Waiting for API to start..."
-          sleep 10  # Adjust based on your API's startup time
+          sleep 10
 
       - name: Install Newman
         run: npm install -g newman
 
       - name: Run API Tests
-        run: |
-          newman run ".dev/Test Java App API.postman_collection" --env-var base_url=http://localhost:8080/api/v1
+        run: newman run ".dev/Test Java App API.postman_collection" --env-var base_url=http://localhost:8080/api/v1
