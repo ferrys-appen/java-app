@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: "[Test] Java App API 1.0"
+  description: |-
+    This is a sample Java App API Contract.
+  version: 1.0.0
+servers:
+  - url: https://localhost:8080/api/v1
+tags:
+  - name: generic
+    description: Generic API object
+paths:
+  /hello:
+    get:
+      tags:
+        - generic
+      summary: Greeting from the server
+      description: Greeting from the server
+      operationId: hello
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Greeting'
+        '500':
+          description: Internal Server Error
+components:
+  schemas:
+    Greeting:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Greeting from the Server
