@@ -33,5 +33,13 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
 
+    # echo list of files in the current directory
+      - name: List files in the current directory
+        run: ls -l
+
+    # echo list of files in the parent directory
+      - name: List files in the current directory
+        run: ls -l ..
+
       - name: Run API Tests
         run: newman run "${{ github.workspace }}/.dev/Test Java App API.postman_collection" --env-var base_url=http://localhost:8080/api/v1
