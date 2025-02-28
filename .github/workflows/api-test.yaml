@@ -30,7 +30,7 @@ jobs:
 
       - name: Start API Server
         run: |
-          java -jar target/*.jar
+          nohup java -jar target/*.jar > api.log 2>&1 &
 
       - name: Install Newman
         run: npm install -g newman
