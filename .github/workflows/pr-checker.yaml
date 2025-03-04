@@ -1,0 +1,48 @@
+name: PR Template Checker
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  check-pr-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR description
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q '.body')
+
+          echo "PR Description:"
+          echo "$PR_BODY"
+
+          # Extract values from the table using regex
+          TICKET_ID=$(echo "$PR_BODY" | grep -oP '(?<=\| Ticket ID\s*\|\s*)[^|]+' | xargs)
+          SUMMARY=$(echo "$PR_BODY" | grep -oP '(?<=\| Summary of Changes\s*\|\s*)[^|]+' | xargs)
+          DETAILS=$(echo "$PR_BODY" | grep -oP '(?<=\| Details of Changes\s*\|\s*)[^|]+' | xargs)
+          REVIEWERS=$(echo "$PR_BODY" | grep -oP '(?<=\| Code Reviewers\s*\|\s*)[^|]+' | xargs)
+          DB_CHANGES=$(echo "$PR_BODY" | grep -oP '(?<=\| DB Changes Needed\s*\|\s*)[^|]+' | xargs)
+          TEST_CASES=$(echo "$PR_BODY" | grep -oP '(?<=\| Test Case Implemented\s*\|\s*)[^|]+' | xargs)
+
+          # Function to check if a field is empty
+          check_field() {
+            FIELD_NAME=$1
+            FIELD_VALUE=$2
+            if [[ -z "$FIELD_VALUE" || "$FIELD_VALUE" == "N/A" ]]; then
+              echo "❌ $FIELD_NAME is missing or not filled in"
+              exit 1
+            fi
+          }
+
+          # Validate each field
+          check_field "Ticket ID" "$TICKET_ID"
+          check_field "Summary of Changes" "$SUMMARY"
+          check_field "Details of Changes" "$DETAILS"
+          check_field "Code Reviewers" "$REVIEWERS"
+          check_field "DB Changes Needed" "$DB_CHANGES"
+          check_field "Test Case Implemented" "$TEST_CASES"
+
+          echo "✅ PR description is valid"
