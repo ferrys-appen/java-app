@@ -1,0 +1,42 @@
+name: PR Template Checker
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  check-pr-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR description
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q '.body')
+
+          echo "PR Description:"
+          echo "$PR_BODY"
+
+          if [[ ! "$PR_BODY" =~ "JIRA Issue:" ]]; then
+            echo "❌ Missing 'JIRA Issue' field"
+            exit 1
+          fi
+
+          if [[ ! "$PR_BODY" =~ "Changelogs:" ]]; then
+            echo "❌ Missing 'Changelogs' section"
+            exit 1
+          fi
+
+          JIRA_ISSUE=$(echo "$PR_BODY" | grep -oP 'JIRA Issue:\s*\K(ABC-\d+)' || true)
+          CHANGELOGS=$(echo "$PR_BODY" | grep -oP 'Changelogs:\s*\K(- .+)' || true)
+
+          if [[ -z "$JIRA_ISSUE" ]]; then
+            echo "❌ JIRA Issue not filled"
+            exit 1
+          fi
+
+          if [[ -z "$CHANGELOGS" ]]; then
+            echo "❌ No Changelogs provided"
+            exit 1
+          fi
+
+          echo "✅ PR description is valid"
