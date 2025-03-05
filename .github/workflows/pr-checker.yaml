@@ -13,16 +13,38 @@ jobs:
         with:
           script: |
             const requiredFields = [
-              '> - Summary of Changes:',
-              '> - Details of Changes:',
-              '> - Code Reviewers:',
-              '> - DB Changes Needed:',
-              '> - Test Case Implemented:'
+              'Summary of Changes:',
+              'Details of Changes:',
+              'Code Reviewers:',
+              'DB Changes Needed:',
+              'Test Case Implemented:'
             ];
 
             const prBody = context.payload.pull_request.body || '';
-            const missingFields = requiredFields.filter(field => !prBody.includes(field));
 
-            if (missingFields.length > 0) {
-              core.setFailed(`Missing required fields in PR description:\n\n${missingFields.join('\n')}`);
+            let missingFields = [];
+            let emptyFields = [];
+
+            requiredFields.forEach(field => {
+              const regex = new RegExp(`>\\s*-\\s*${field}\\s*(.+)`, 'i');
+              const match = prBody.match(regex);
+              
+              if (!match) {
+                missingFields.push(field);
+              } else if (!match[1].trim() || match[1].trim().toLowerCase() === "tbd") {
+                emptyFields.push(field);
+              }
+            });
+
+            if (missingFields.length > 0 || emptyFields.length > 0) {
+              let errorMessage = "🚨 **PR Check Failed!** 🚨\n\n";
+
+              if (missingFields.length > 0) {
+                errorMessage += `❌ **Missing Required Fields:**\n- ${missingFields.join('\n- ')}\n\n`;
+              }
+              if (emptyFields.length > 0) {
+                errorMessage += `⚠️ **Fields That Must Have a Value (Cannot Be Blank or 'TBD'):**\n- ${emptyFields.join('\n- ')}\n\n`;
+              }
+
+              core.setFailed(errorMessage);
             }
