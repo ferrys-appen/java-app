@@ -3,6 +3,7 @@ package com.ferrys;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
@@ -21,5 +22,11 @@ class HelloController {
     @GetMapping("/hello")
     public Map<String, String> sayHello() {
         return Map.of("message", "hello from the server");
+    }
+
+    // greeting with name
+    @GetMapping("/hello/{name}")
+    public Map<String, String> sayHelloWithName(@PathVariable String name) {
+        return Map.of("message", "hello " + name + " from the server");
     }
 }
