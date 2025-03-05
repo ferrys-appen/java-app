@@ -1,0 +1,71 @@
+name: PR Checklist Validator
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:  # ✅ Grant explicit permissions
+  pull-requests: write
+
+jobs:
+  check-pr-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR checklist completion
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body -q '.body')
+
+          echo "PR Description:"
+          echo "$PR_BODY"
+
+          # Extract values using awk
+          SUMMARY=$(echo "$PR_BODY" | awk -F': ' '/- Summary of Changes:/ {print $2}')
+          DETAILS=$(echo "$PR_BODY" | awk -F': ' '/- Details of Changes:/ {print $2}')
+          REVIEWERS=$(echo "$PR_BODY" | awk -F': ' '/- Code Reviewers:/ {print $2}')
+          DB_CHANGES=$(echo "$PR_BODY" | awk -F': ' '/- DB Changes Needed:/ {print $2}')
+          TEST_CASES=$(echo "$PR_BODY" | awk -F': ' '/- Test Case Implemented:/ {print $2}')
+
+          MISSING_FIELDS=()
+
+          # Function to check if a field is empty
+          check_field() {
+            FIELD_NAME=$1
+            FIELD_VALUE=$2
+            if [[ -z "$FIELD_VALUE" || "$FIELD_VALUE" == "N/A" ]]; then
+              MISSING_FIELDS+=("$FIELD_NAME")
+            fi
+          }
+
+          # Validate each field
+          check_field "Summary of Changes" "$SUMMARY"
+          check_field "Details of Changes" "$DETAILS"
+          check_field "Code Reviewers" "$REVIEWERS"
+          check_field "DB Changes Needed" "$DB_CHANGES"
+          check_field "Test Case Implemented" "$TEST_CASES"
+
+          if [[ ${#MISSING_FIELDS[@]} -gt 0 ]]; then
+            echo "❌ Missing fields: ${MISSING_FIELDS[*]}"
+
+            COMMENT_BODY="🚨 **PR Validation Failed** 🚨  
+            The following required fields are missing in the PR checklist:  
+            - ${MISSING_FIELDS[*]}  
+            Please update the PR description to pass the check. ✅"
+
+            # Delete existing bot comment (if any) to prevent duplicates
+            EXISTING_COMMENT_ID=$(gh pr comment "$PR_NUMBER" --list --json id,body | jq -r '.[] | select(.body | contains("🚨 **PR Validation Failed** 🚨")) | .id')
+            if [[ -n "$EXISTING_COMMENT_ID" ]]; then
+              gh pr comment "$PR_NUMBER" --delete "$EXISTING_COMMENT_ID"
+            fi
+
+            # Post a new comment with the missing fields
+            gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+
+            exit 1  # Fail the workflow
+          fi
+
+          echo "✅ PR checklist is valid"
