@@ -1,7 +1,7 @@
 name: PR Checklist Validator
 on:
   pull_request_target:  # ✅ Use pull_request_target instead of pull_request
-    types: [opened, edited]
+    types: [opened, edited, synchronize]
 
 permissions:  # ✅ Grant explicit permissions
   pull-requests: write
