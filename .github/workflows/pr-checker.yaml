@@ -1,50 +1,46 @@
-name: PR Description Check
-
+name: PR Checklist Validator
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types: [opened, edited]
 
 jobs:
-  check_pr_description:
+  check-pr-description:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate PR Description
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const requiredFields = [
-              'Summary of Changes:',
-              'Details of Changes:',
-              'Code Reviewers:',
-              'DB Changes Needed:',
-              'Test Case Implemented:'
-            ];
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            const prBody = context.payload.pull_request.body || '';
+      - name: Check PR checklist completion
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q '.body')
 
-            let missingFields = [];
-            let emptyFields = [];
+          echo "PR Description:"
+          echo "$PR_BODY"
 
-            requiredFields.forEach(field => {
-              const regex = new RegExp(`>\\s*-\\s*${field}\\s*(.+)`, 'i');
-              const match = prBody.match(regex);
-              
-              if (!match) {
-                missingFields.push(field);
-              } else if (!match[1].trim() || match[1].trim().toLowerCase() === "tbd") {
-                emptyFields.push(field);
-              }
-            });
+          # Extract values from checklist using regex
+          SUMMARY=$(echo "$PR_BODY" | grep -oP '(?<=- Summary of Changes:\s*).*' | xargs)
+          DETAILS=$(echo "$PR_BODY" | grep -oP '(?<=- Details of Changes:\s*).*' | xargs)
+          REVIEWERS=$(echo "$PR_BODY" | grep -oP '(?<=- Code Reviewers:\s*).*' | xargs)
+          DB_CHANGES=$(echo "$PR_BODY" | grep -oP '(?<=- DB Changes Needed:\s*).*' | xargs)
+          TEST_CASES=$(echo "$PR_BODY" | grep -oP '(?<=- Test Case Implemented:\s*).*' | xargs)
 
-            if (missingFields.length > 0 || emptyFields.length > 0) {
-              let errorMessage = "🚨 **PR Check Failed!** 🚨\n\n";
+          # Function to check if a field is empty
+          check_field() {
+            FIELD_NAME=$1
+            FIELD_VALUE=$2
+            if [[ -z "$FIELD_VALUE" || "$FIELD_VALUE" == "N/A" ]]; then
+              echo "❌ $FIELD_NAME is missing or not filled in"
+              exit 1
+            fi
+          }
 
-              if (missingFields.length > 0) {
-                errorMessage += `❌ **Missing Required Fields:**\n- ${missingFields.join('\n- ')}\n\n`;
-              }
-              if (emptyFields.length > 0) {
-                errorMessage += `⚠️ **Fields That Must Have a Value (Cannot Be Blank or 'TBD'):**\n- ${emptyFields.join('\n- ')}\n\n`;
-              }
+          # Validate each field
+          check_field "Summary of Changes" "$SUMMARY"
+          check_field "Details of Changes" "$DETAILS"
+          check_field "Code Reviewers" "$REVIEWERS"
+          check_field "DB Changes Needed" "$DB_CHANGES"
+          check_field "Test Case Implemented" "$TEST_CASES"
 
-              core.setFailed(errorMessage);
-            }
+          echo "✅ PR checklist is valid"
