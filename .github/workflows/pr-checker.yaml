@@ -19,12 +19,12 @@ jobs:
           echo "PR Description:"
           echo "$PR_BODY"
 
-          # Extract values from checklist using regex
-          SUMMARY=$(echo "$PR_BODY" | grep -oP '(?<=- Summary of Changes:\s*).*' | xargs)
-          DETAILS=$(echo "$PR_BODY" | grep -oP '(?<=- Details of Changes:\s*).*' | xargs)
-          REVIEWERS=$(echo "$PR_BODY" | grep -oP '(?<=- Code Reviewers:\s*).*' | xargs)
-          DB_CHANGES=$(echo "$PR_BODY" | grep -oP '(?<=- DB Changes Needed:\s*).*' | xargs)
-          TEST_CASES=$(echo "$PR_BODY" | grep -oP '(?<=- Test Case Implemented:\s*).*' | xargs)
+          # Extract values from checklist using awk
+          SUMMARY=$(echo "$PR_BODY" | awk -F': ' '/- Summary of Changes:/ {print $2}')
+          DETAILS=$(echo "$PR_BODY" | awk -F': ' '/- Details of Changes:/ {print $2}')
+          REVIEWERS=$(echo "$PR_BODY" | awk -F': ' '/- Code Reviewers:/ {print $2}')
+          DB_CHANGES=$(echo "$PR_BODY" | awk -F': ' '/- DB Changes Needed:/ {print $2}')
+          TEST_CASES=$(echo "$PR_BODY" | awk -F': ' '/- Test Case Implemented:/ {print $2}')
 
           # Function to check if a field is empty
           check_field() {
