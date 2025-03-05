@@ -1,7 +1,10 @@
 name: PR Checklist Validator
 on:
-  pull_request:
-    types: [opened, edited, synchronize]
+  pull_request_target:  # ✅ Use pull_request_target instead of pull_request
+    types: [opened, edited]
+
+permissions:  # ✅ Grant explicit permissions
+  pull-requests: write
 
 jobs:
   check-pr-description:
@@ -53,13 +56,7 @@ jobs:
             - ${MISSING_FIELDS[*]}  
             Please update the PR description to pass the check. ✅"
 
-            # Delete existing bot comment (if any) to prevent duplicates
-            EXISTING_COMMENT_ID=$(gh pr comment "$PR_NUMBER" --list --json id,body | jq -r '.[] | select(.body | contains("🚨 **PR Validation Failed** 🚨")) | .id')
-            if [[ -n "$EXISTING_COMMENT_ID" ]]; then
-              gh pr comment "$PR_NUMBER" --delete "$EXISTING_COMMENT_ID"
-            fi
-
-            # Post a new comment with the missing fields
+            # Post a comment in the PR
             gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
 
             exit 1  # Fail the workflow
